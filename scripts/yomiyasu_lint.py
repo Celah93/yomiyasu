@@ -73,13 +73,26 @@ FILLER_PATTERNS = [
 NEGATIVE_PARALLELISM_PATTERN = re.compile(r"([^。、]+)ではなく、?([^。、]+)")
 
 
+def get_frontmatter_line_count(lines: List[str]) -> int:
+    """YAMLフロントマター（先頭の --- から 次の --- まで）の行数を返す"""
+    if not lines or lines[0].strip() != "---":
+        return 0
+    for idx in range(1, len(lines)):
+        if lines[idx].strip() == "---":
+            return idx + 1
+    return 0
+
+
 def extract_plain_sentences(text: str) -> List[Tuple[int, str]]:
     """コードブロックや引用、箇条書きを除去し、地の文の段落文（行番号つき）を抽出する"""
     lines = text.split("\n")
     sentences = []
     in_code_block = False
+    fm_lines = get_frontmatter_line_count(lines)
 
     for idx, line in enumerate(lines, 1):
+        if idx <= fm_lines:
+            continue
         stripped = line.strip()
         if stripped.startswith("```"):
             in_code_block = not in_code_block
@@ -162,7 +175,10 @@ def analyze_markdown_metrics(text: str) -> Dict[str, Any]:
     lines = text.split("\n")
     plain_lines = []
     in_code = False
-    for l in lines:
+    fm_lines = get_frontmatter_line_count(lines)
+    for idx, l in enumerate(lines, 1):
+        if idx <= fm_lines:
+            continue
         stripped = l.strip()
         if stripped.startswith("```"):
             in_code = not in_code
@@ -229,7 +245,10 @@ def lint_text(text: str) -> Dict[str, Any]:
     # 3. 語彙・構文パターン検査
     lines = text.split("\n")
     in_code = False
+    fm_lines = get_frontmatter_line_count(lines)
     for line_no, line in enumerate(lines, 1):
+        if line_no <= fm_lines:
+            continue
         stripped = line.strip()
         if stripped.startswith("```") or stripped.startswith("~~~"):
             in_code = not in_code

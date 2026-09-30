@@ -1,13 +1,17 @@
-# yomiyasu
+# yomiyasu（よみやす）
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/nanaism/yomiyasu)](https://github.com/nanaism/yomiyasu/releases)
 
 ## これは何？
 
-yomiyasuは、AIが生成した日本語の不自然さを解消し、人間が読みやすく情報密度の高い文章へ推敲するためのスキルです。
+『yomiyasu（よみやす）』は、AIが生成した日本語の不自然さを解消し、人間が読みやすく情報密度の高い日本語へ推敲するためのスキルです。
 
 Codex、Claude Code、CursorをはじめとするAIコーディング環境に読み込ませて使用してください。
+
+開発背景や言語学的病理の分析、複数のコーパスによる検証結果については、以下の解説記事で詳しく紹介しています。
+
+- **解説記事**: [AI臭い日本語を脱臭するAgent Skill『yomiyasu』を作った話（Zenn）](https://zenn.dev/algoartis/articles/0b1c731881b25c)
 
 *Built with curiosity at [ALGO ARTIS](https://www.algo-artis.com/)*
 
@@ -283,10 +287,10 @@ AIっぽさ 検査レポート (スコア: 100/100)
 
 ---
 
-## 作者・連絡先
+## 作者・宛先
 
 開発者: 大賀 愛一郎（oga_aiichiro）@ALGO ARTIS  
-連絡先: [@oga_aiichiro](https://x.com/oga_aiichiro)
+宛先: [@oga_aiichiro](https://x.com/oga_aiichiro)
 
 ※ 本スキルおよび本リポジトリは個人の研究・創作物であり、所属企業の公式プロダクトや見解を代表するものではありません。
 
@@ -300,4 +304,4 @@ AIっぽさ 検査レポート (スコア: 100/100)
 
 ## 最後に
 
-v1.0.0におけるこのREADMEは、yomiyasuで一発で生成させた文章です。
+このREADMEは、『yomiyasu』を用いて書かれています。
