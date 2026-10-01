@@ -134,10 +134,14 @@ AIによる文章生成は日常的な道具となりました。一方で、生
 ### 1. `npx skills add`（推奨）
 
 ```bash
+# 新規インストール
 npx skills add nanaism/yomiyasu
+
+# 最新版へのアップデート
+npx skills update yomiyasu
 ```
 
-Claude Codeなどのエージェント設定ディレクトリへインストールします。
+Claude Codeなどのエージェント設定ディレクトリへインストール・更新します（すでに導入済みの場合は `npx skills update yomiyasu` で最新版へ更新できます）。
 
 ### 2. `npx openskills install`（Cursor / Codexなど）
 
