@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/yomiyasu_logo.jpeg" alt="yomiyasu logo" width="700">
+</p>
+
 # yomiyasu（よみやす）
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
