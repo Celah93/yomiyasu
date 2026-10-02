@@ -47,7 +47,7 @@ SLOP_WORDS = [
 # 比喩動詞・AI偏愛動詞パターン
 METAPHOR_VERB_PATTERNS = [
     (r"(地味に|よく|じわじわ)効[かきくけいた]", "比喩動詞「効く」の過剰使用"),
-    (r"(データ|仕様|設計|環境|ビルド|システム|秩序)が(静かに)?壊れ[るた]", "比喩動詞「壊れる」"),
+    (r"(データ|仕様|設計|環境|ビルド|システム|秩序)が(静かに)?壊れ", "比喩動詞「壊れる」"),
     (r"静かに(壊れ|落ち|失敗|沈黙)", "英語直訳「静かに壊れる (silently fail)」"),
     (r"黙って(無視|捨て|スキップ|破棄)", "英語直訳「黙って無視される」"),
     (r"側に倒[すしせ]", "判断を方向で表現する「〜側に倒す」"),
@@ -56,7 +56,7 @@ METAPHOR_VERB_PATTERNS = [
     (r"(実装|詳細|コード|設計|内部|仕組み|領域|本質)(に|まで|へ)踏み込[んむみま]", "比喩動詞「踏み込む」"),
     (r"動かしながら引き返[すし]", "比喩動詞「引き返す」"),
     (r"代わりに添え[るた]", "比喩動詞「添える」"),
-    (r"(議論|意見|結論|方向性|価格|話題|検討)が.*収斂", "比喩動詞「収斂する」"),
+    (r"(議論|意見|結論|方向性|価格|話題|検討)が[^。！？!?]*?収斂", "比喩動詞「収斂する」"),
     (r"した瞬間に?", "英語直訳「〜した瞬間 (the moment ...)」"),
     (r"(前提|基盤)が崩れ[るた]", "抽象比喩「前提が崩れる」"),
     (r"文化が醸成", "非生物主語「文化が醸成される」"),
@@ -470,8 +470,14 @@ def lint_text(text: str) -> Dict[str, Any]:
                 })
 
         # 比喩動詞パターン
+        matched_spans: List[Tuple[int, int]] = []
         for pattern, desc in METAPHOR_VERB_PATTERNS:
-            if re.search(pattern, plain_text):
+            for m in re.finditer(pattern, plain_text):
+                span = (m.start(), m.end())
+                # 既に登録された比喩動詞のマッチ区間と重なりがある場合は重複警告を避ける
+                if any(start < span[1] and end > span[0] for start, end in matched_spans):
+                    continue
+                matched_spans.append(span)
                 findings.append({
                     "rule": "metaphor_verb",
                     "line": line_no,

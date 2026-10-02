@@ -193,7 +193,9 @@ AI文章は、文と文をつなぐ接続詞が前後の論理と合っていな
 
 Markdown として表示される文章（GitHub、技術記事など）で太字を残すときは、太字として正しく表示される書き方にする。
 GitHub Flavored Markdown や CommonMark では、`**` のすぐ内側が記号（「」『』（）【】、。やバッククォート等）で、すぐ外側が文字（ひらがな・漢字・英数字）である場合、構文規則上太字として解釈されず、`**` がそのまま文字として表示されてしまう。
-この仕様は、CommonMark Spec 0.31.2（2024-01-28）の 6.2節「Emphasis and strong emphasis」における left-flanking / right-flanking delimiter run の定義、および GitHub Flavored Markdown Spec 0.29-gfm（2019-04-06）に基づく。ASCII の記号に加え、Unicode の P の類（句読点類: Pc、Pd、Pe、Pf、Pi、Po、Ps）や S の類（記号類）と文字に挟まれることで生じる。CommonMark のフォーラムの「Emphasis and East Asian text」（2017年6月）でも、日本語の `猫は**「のどか」**という。` で太字にならない例が挙げられている。
+この仕様は、CommonMark Spec 0.31.2（2024-01-28）の 6.2節「Emphasis and strong emphasis」における left-flanking / right-flanking delimiter run の定義、および GitHub Flavored Markdown Spec 0.29-gfm（2019-04-06）に基づく。
+ただし、記号として扱われる範囲には仕様の版によって違いがある。公開されている [GitHub Flavored Markdown Spec 0.29-gfm](https://github.github.com/gfm/#punctuation-character) では ASCII の句読記号と Unicode の P 類（句読点類: Pc、Pd、Pe、Pf、Pi、Po、Ps）を記号として数えるのに対し、[CommonMark Spec 0.31.2](https://spec.commonmark.org/0.31.2/#unicode-punctuation-character) ではさらに Unicode の S 類（記号類）も記号として数える。したがって、矢印「→」などの非 ASCII の S 類に接する太字が、GitHub でも必ず同じ理由で崩れるとは限らない。
+現在の yomiyasu のスクリプトは、GFM と CommonMark の両方で表示される形を検査している。この保守的な方針や、かっこの内側・句点を外・最後に空白という直し方の順は変えない。なお、CommonMark のフォーラムの「Emphasis and East Asian text」（2017年6月）でも、日本語の `猫は**「のどか」**という。` で太字にならない例が挙げられている。
 
 太字を残すときは、次の優先順で直す。
 1. かっこごと太字にしているときは、かっこの内側だけを太字にする。
