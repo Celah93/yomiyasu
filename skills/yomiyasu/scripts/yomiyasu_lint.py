@@ -470,14 +470,27 @@ def lint_text(text: str) -> Dict[str, Any]:
                 })
 
         # 比喩動詞パターン
-        matched_spans: List[Tuple[int, int]] = []
+        kowareru_span = None
         for pattern, desc in METAPHOR_VERB_PATTERNS:
-            for m in re.finditer(pattern, plain_text):
-                span = (m.start(), m.end())
-                # 既に登録された比喩動詞のマッチ区間と重なりがある場合は重複警告を避ける
-                if any(start < span[1] and end > span[0] for start, end in matched_spans):
-                    continue
-                matched_spans.append(span)
+            if desc == "英語直訳「静かに壊れる (silently fail)」" and kowareru_span:
+                # 「壊れる」と「静かに壊れる」が同一動詞に二重反応することを防止
+                for m in re.finditer(pattern, plain_text):
+                    span = (m.start(), m.end())
+                    if kowareru_span[0] <= span[0] and span[1] <= kowareru_span[1]:
+                        continue
+                    findings.append({
+                        "rule": "metaphor_verb",
+                        "line": line_no,
+                        "severity": "warn",
+                        "message": f"{desc}が検出されました。不自然な比喩動詞であれば、ふだん使う動詞や客観的な表現に書き直してください。ただし、文字どおりの動作や状態変化を表している場合は無理に言い換える必要はありません。",
+                        "snippet": line.strip()
+                    })
+                continue
+
+            m = re.search(pattern, plain_text)
+            if m:
+                if desc == "比喩動詞「壊れる」":
+                    kowareru_span = (m.start(), m.end())
                 findings.append({
                     "rule": "metaphor_verb",
                     "line": line_no,
