@@ -9,12 +9,14 @@ yomiyasu_diff.py（試作）- 元の文と書き直した文を比べて、足�
   3. 箇条書きをやめたかどうか、段落をまとめたかどうか
   4. 書き直した文の中で、つながりを確かめるべき場所（文頭のつなぎ、主題の「も」、予告だけの文、文頭の指示語）
   5. 文末の種類（勧め・依頼・動作の「〜します」・評価・常体など）と、文書の立場が混ざっている候補
+  6. 書き直した文の中で、太字にならない書き方（GitHub などで ** がそのまま表示されるところ）と、直し方の案
 言い換えかどうか、つながりが合っているか、文末が立場に合っているかの最終判断は、この結果を見たモデル（または人）がする。
 """
 import re
 import sys
 import json
 import difflib
+import unicodedata
 
 # 文末や言い回しの種類。数が増えた・減ったものを候補にする
 MARKERS = {
@@ -245,6 +247,138 @@ def ending_changes(o: str, r: str):
     return changes
 
 
+# ---- 太字が表示されるか（GitHub などの Markdown）----
+# GitHub の Markdown では、** のすぐ内側が記号（「」（）` など）で、すぐ外側が文字だと、** を太字の印として読まず、
+# ** がそのまま表示される。新しい CommonMark（記号に Unicode の S も入る）でも、GitHub の GFM（P だけ）でも
+# 太字になる形だけを「表示される」とみなす。直し方の案は、かっこの内側だけを太字にする → 句読点を太字の外に出す
+# → 文字に接する側に半角スペースを入れる、の順に試す。
+BOLD_ASCII_PUNCT = set("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")
+BOLD_BRACKETS = {"「": "」", "『": "』", "（": "）", "(": ")", "【": "】", "〔": "〕", "［": "］", "[": "]",
+                 "〈": "〉", "《": "》", "“": "”", "‘": "’", "＜": "＞"}
+
+
+def _bold_ws(ch: str) -> bool:
+    return ch == "" or ch.isspace()
+
+
+def _bold_punct_gfm(ch: str) -> bool:
+    return ch != "" and (ch in BOLD_ASCII_PUNCT or unicodedata.category(ch).startswith("P"))
+
+
+def _bold_punct_new(ch: str) -> bool:
+    return ch != "" and unicodedata.category(ch)[0] in "PS"
+
+
+def _bold_can_open(prev: str, nxt: str) -> bool:
+    return all(not _bold_ws(nxt) and (not p(nxt) or _bold_ws(prev) or p(prev)) for p in (_bold_punct_gfm, _bold_punct_new))
+
+
+def _bold_can_close(prev: str, nxt: str) -> bool:
+    return all(not _bold_ws(prev) and (not p(prev) or _bold_ws(nxt) or p(nxt)) for p in (_bold_punct_gfm, _bold_punct_new))
+
+
+def _bold_code_spans(line: str):
+    """インラインコード（同じ数のバッククォートで閉じたもの）の範囲"""
+    runs = [(m.start(), m.end()) for m in re.finditer(r"`+", line)]
+    spans, k = [], 0
+    while k < len(runs):
+        s, e = runs[k]
+        for m in range(k + 1, len(runs)):
+            if runs[m][1] - runs[m][0] == e - s:
+                spans.append((s, runs[m][1]))
+                k = m
+                break
+        k += 1
+    return spans
+
+
+def _bold_pairs(line: str):
+    code = _bold_code_spans(line)
+    pos = [m.start() for m in re.finditer(r"(?<![*\\])\*\*(?!\*)", line)
+           if not any(a <= m.start() < b for a, b in code)]
+    return [(pos[k], pos[k + 1]) for k in range(0, len(pos) - 1, 2)]
+
+
+def _bold_pair_ok(line: str, i: int, j: int) -> bool:
+    ch = lambda p: line[p] if 0 <= p < len(line) else ""
+    return _bold_can_open(ch(i - 1), ch(i + 2)) and _bold_can_close(ch(j - 1), ch(j + 2))
+
+
+def _bold_close_of(s: str) -> int:
+    """s の先頭のかっこに対応する閉じかっこの位置（なければ -1）"""
+    o, c, depth = s[0], BOLD_BRACKETS[s[0]], 0
+    for k, x in enumerate(s):
+        if x == o:
+            depth += 1
+        elif x == c:
+            depth -= 1
+            if depth == 0:
+                return k
+    return -1
+
+
+def _bold_fix(line: str, i: int, j: int, k: int):
+    """k 番目の太字（i と j の **）の直し方の案。(直したあとの部分, 直し方) を返す"""
+    inner = line[i + 2:j]
+    tries = []
+    if len(inner) >= 3 and inner[0] in BOLD_BRACKETS and _bold_close_of(inner) == len(inner) - 1:
+        tries.append((inner[0] + "**" + inner[1:-1] + "**" + inner[-1], "かっこの内側だけを太字にする"))
+    if len(inner) >= 2 and inner[-1] in "。、．，！？!?":
+        tries.append(("**" + inner[:-1] + "**" + inner[-1], "句読点を太字の外に出す"))
+    ch = lambda p: line[p] if 0 <= p < len(line) else ""
+    body = inner
+    if _bold_ws(ch(i + 2)) or _bold_ws(ch(j - 1)):
+        body = inner.strip()
+    left = "" if _bold_can_open(ch(i - 1), body[:1]) else " "
+    right = "" if _bold_can_close(body[-1:], ch(j + 2)) else " "
+    tries.append((left + "**" + body + "**" + right, "太字の内側の空白を取る" if body != inner and not (left or right)
+                  else "文字に接する側に半角スペースを入れる"))
+    for middle, how in tries:
+        cand = line[:i] + middle + line[j + 2:]
+        pairs = _bold_pairs(cand)
+        if k < len(pairs) and _bold_pair_ok(cand, *pairs[k]):
+            return middle, how
+    return None, "手で直す"
+
+
+def bold_problems(text: str, skip_frontmatter: bool = True):
+    """太字にならない ** の場所と、直し方の案。コードブロック・インラインコード・HTML の行・先頭の設定部分は見ない"""
+    out, fence = [], None
+    lines = text.split("\n")
+    start = 0
+    if skip_frontmatter and lines and lines[0].strip() == "---":
+        for n in range(1, len(lines)):
+            if lines[n].strip() == "---":
+                start = n + 1
+                break
+    for no in range(start, len(lines)):
+        line = lines[no].rstrip("\r")
+        m = re.match(r"\s{0,3}(`{3,}|~{3,})(.*)$", line)
+        if fence:
+            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= fence[1] and not m.group(2).strip():
+                fence = None
+            continue
+        if m and not (m.group(1)[0] == "`" and "`" in m.group(2)):
+            fence = (m.group(1)[0], len(m.group(1)))
+            continue
+        if line.lstrip().startswith("<"):
+            continue
+        for k, (i, j) in enumerate(_bold_pairs(line)):
+            if _bold_pair_ok(line, i, j):
+                continue
+            middle, how = _bold_fix(line, i, j, k)
+            pre, post = line[max(0, i - 4):i], line[j + 2:j + 6]
+            found = pre + _bold_short(line[i:j + 2]) + post
+            suggest = pre + _bold_short(middle) + post if middle is not None else ""
+            out.append({"line": no + 1, "found": found, "suggest": suggest, "how": how})
+    return out
+
+
+def _bold_short(s: str) -> str:
+    """長い太字は、直すところ（両端）だけを見せる"""
+    return s if len(s) <= 30 else s[:12] + "…" + s[-12:]
+
+
 def count(pat: str, t: str) -> int:
     return len(re.findall(pat, t))
 
@@ -256,7 +390,8 @@ def context(t: str, i: int, j: int, width: int = 18) -> str:
 
 def diff(orig_raw: str, rw_raw: str, stance=None) -> dict:
     o, r = normalize(orig_raw), normalize(rw_raw)
-    out = {"markers": [], "new_words": [], "lost_words": [], "structure": [], "spans": [], "logic": logic_points(rw_raw)}
+    out = {"markers": [], "new_words": [], "lost_words": [], "structure": [], "spans": [], "logic": logic_points(rw_raw),
+           "bold": bold_problems(rw_raw)}
     _, flags = stance_flags(rw_raw, stance)
     _, orig_flags = stance_flags(orig_raw, stance)
     out["endings"] = {"stance": stance, "changes": ending_changes(orig_raw, rw_raw),
@@ -300,6 +435,14 @@ def diff(orig_raw: str, rw_raw: str, stance=None) -> dict:
     return out
 
 
+def bold_head(where: str = "") -> str:
+    return f"■ 太字にならない書き方（{where}GitHub などで ** がそのまま表示される。案のとおりに直す）"
+
+
+def bold_lines(problems):
+    return [f"- {p['line']}行目: {p['found']} → {p['suggest'] or '（手で直す）'}（{p['how']}）" for p in problems]
+
+
 def report(d: dict) -> str:
     lines = []
     if d["markers"]:
@@ -330,6 +473,9 @@ def report(d: dict) -> str:
             lines.append(f"- {f['note']}")
             for s in f["sentences"]:
                 lines.append(f"  ・{s if len(s) <= 44 else s[:44] + '…'}")
+    if d.get("bold"):
+        lines.append(bold_head("書き直した文。"))
+        lines.extend(bold_lines(d["bold"]))
     return "\n".join(lines) if lines else "（候補なし）"
 
 
@@ -350,6 +496,10 @@ if __name__ == "__main__":
             print(f"■ {n}")
             for r in fr:
                 print(f"  ・{r['sentence'] if len(r['sentence']) <= 60 else r['sentence'][:60] + '…'}")
+        bp = bold_problems(t)
+        if bp:
+            print(bold_head())
+            print("\n".join(bold_lines(bp)))
         sys.exit(0)
     if len(args) < 2:
         print("使い方: python3 yomiyasu_diff.py 元の文.txt 書き直した文.txt [--stance=勧め|決まり|説明] [--json]")
