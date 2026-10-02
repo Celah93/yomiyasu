@@ -485,6 +485,7 @@ def lint_text(text: str) -> Dict[str, Any]:
                         "message": f"{desc}が検出されました。不自然な比喩動詞であれば、ふだん使う動詞や客観的な表現に書き直してください。ただし、文字どおりの動作や状態変化を表している場合は無理に言い換える必要はありません。",
                         "snippet": line.strip()
                     })
+                    break
                 continue
 
             m = re.search(pattern, plain_text)
