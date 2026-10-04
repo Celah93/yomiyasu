@@ -165,9 +165,19 @@ npx openskills sync
 /plugin install yomiyasu@yomiyasu
 ```
 
-### 4. 手動配置
+### 4. ZIPファイルからの登録（Claude.ai Web版など）
 
-[Releases](https://github.com/nanaism/yomiyasu/releases)から`yomiyasu.skill`をダウンロードし、エージェントのスキルディレクトリに展開して配置してください。
+Claudeのカスタムスキル登録機能（Web版など）を利用する場合、GitHubの「Download ZIP」から取得したリポジトリ全体のZIPをアップロードすると、別形式の設定ファイル（`plugin.json`）や重複ファイルを検知して登録エラーになる仕様です。
+
+そのため、スキル本体のみを固めた登録専用のZIPファイルを用意しています。
+
+1. **専用ZIPのダウンロード**  
+   以下のリンクから、登録専用のZIPファイルをダウンロードします。  
+   [yomiyasu.zip（最新版ダウンロード）](https://github.com/nanaism/yomiyasu/releases/latest/download/yomiyasu.zip)
+2. **そのままアップロード**  
+   ダウンロードした `yomiyasu.zip` を解凍せず、Claudeのスキル登録画面にそのままアップロードしてください。
+
+※ すでにリポジトリ全体のZIPをダウンロード済みの場合は、解凍したフォルダの中から `SKILL.md` と `references/` フォルダの2つだけを選択して右クリックからZIP圧縮し、そのZIPファイルをアップロードすることでも登録可能です。
 
 ### 他の日本語校正スキルとの干渉について
 
