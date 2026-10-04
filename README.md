@@ -212,9 +212,13 @@ AIチャットやコーディングエージェントに対して、下書きを
 
 ---
 
-## 付属ツール: yomiyasu_lint.py（AIっぽさ数値化リンター）
+## 付属ツール
 
-文章内のAIっぽさ（不自然な比喩、過剰な太字・箇条書き、絵文字、文末コロン、同一文末の連続など）を数値化して検査できるPythonスクリプトを同梱しています。外部ライブラリへの依存はなく、Python標準ライブラリのみで動作します。
+本リポジトリには、文章のAIっぽさやMarkdownの構文崩れを検査する2つのPythonスクリプトを同梱しています。外部ライブラリへの依存はなく、Python標準ライブラリのみで動作する設計です。
+
+### 1. yomiyasu_lint.py（静的検査リンター）
+
+文章内のAIっぽさ（不自然な比喩動詞、過剰な太字・箇条書き、絵文字、文末コロン、同一文末の連続、不要な半角空白など）に加え、GitHub Flavored MarkdownやCommonMarkで日本語の括弧や句読点に隣接して太字記号（`**`）がそのまま露出してしまう構文崩れ（`bold_not_rendered`）を数値化して検査します。複数行にまたがる太字やブロック境界（引用、見出し、リスト、表）も考慮して判定します。
 
 ```bash
 # Markdownファイルを検査
@@ -222,9 +226,12 @@ python3 scripts/yomiyasu_lint.py README.md
 
 # 警告があれば終了コード1を返す厳格モード（CIやGitフック用）
 python3 scripts/yomiyasu_lint.py article.md --strict
+
+# JSON形式で結果を出力
+python3 scripts/yomiyasu_lint.py article.md --json
 ```
 
-### 出力例
+#### 出力例
 
 ```text
 ============================================================
@@ -237,6 +244,18 @@ AIっぽさ 検査レポート (スコア: 100/100)
 [PASS] 設定された検査ルールによる指摘はありません。
 ```
 
+### 2. yomiyasu_diff.py（推敲差分チェッカー）
+
+推敲前（原文）と推敲後の文章を比較し、意図しない意味の変化、勝手な情報の付け足し、文末の立場（勧め／決まり／説明）の食い違い、太字表示崩れの修正が適切に行われているかを確かめるツールです。
+
+```bash
+# 原文と推敲後の差分を検査（文書の立場を指定）
+python3 scripts/yomiyasu_diff.py 元の文.md 書き直した文.md --stance=説明
+
+# 文末の種類（敬体・常体・立場）の分布のみを確認
+python3 scripts/yomiyasu_diff.py --endings 対象文.md
+```
+
 ---
 
 ## リポジトリ構成
@@ -246,15 +265,22 @@ AIっぽさ 検査レポート (スコア: 100/100)
 ├── .claude-plugin/                   # Claude Code用プラグイン設定
 │   ├── plugin.json
 │   └── marketplace.json
-├── SKILL.md                          # スキルエントリポイント
+├── SKILL.md                          # スキル定義エントリポイント
 ├── README.md                         # 本ドキュメント
-├── scripts/
-│   └── yomiyasu_lint.py             # 静的検査スクリプト
-├── references/
+├── LICENSE                           # ライセンス（MIT）
+├── scripts/                          # 付属検査ツール群
+│   ├── yomiyasu_lint.py             # 静的検査スクリプト（AIっぽさ・太字構文検査）
+│   └── yomiyasu_diff.py             # 差分検査スクリプト（推敲前後の意味・文末比較）
+├── references/                       # スキル参照ドキュメント
 │   ├── gemini-syntax.md              # 構文変換原則
 │   ├── slop-catalog.md               # 不自然な語彙・構文カタログ
 │   └── domains/                      # ドメイン別指針（tech, business, essay）
-└── evals/
+├── skills/                           # 配布用パッケージ（エージェントインストール用コピー）
+│   └── yomiyasu/
+├── tests/                            # 単体テスト・回帰テストスイート
+│   ├── test_bold_multiline.py        # 複数行太字・境界検査テストスイート
+│   └── fixtures/                     # 回帰テスト用フィクスチャ（50ケース）
+└── evals/                            # 評価データ
     └── comparison_benchmark.md       # オープンライセンス文章を用いた比較検証データ
 ```
 
