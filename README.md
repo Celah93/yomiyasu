@@ -143,7 +143,7 @@ npx skills update yomiyasu
 
 Claude Codeなどのエージェント設定ディレクトリへインストール・更新します。すでに導入済みの場合は `npx skills update yomiyasu` で最新版へ更新できます。スキル定義は `skills/yomiyasu/SKILL.md` の1か所に配置しています。
 
-### 2. GitHub CLI（`gh skill install`）
+### 2. GitHub CLI
 
 GitHub CLIの `gh skill` コマンドからインストールできます。
 
@@ -155,8 +155,7 @@ gh skill install nanaism/yomiyasu yomiyasu
 gh skill update yomiyasu
 ```
 
-導入先のエージェントを指定する場合は、`--agent codex` や `--agent claude-code` を追加します。
-版を固定して導入した環境で最新版へ更新する場合は、更新コマンドに `--unpin` を追加します。
+導入先のエージェントを指定する場合は、`--agent codex` や `--agent claude-code` を追加してください。
 
 ### 3. `npx openskills install`（Cursor / Codexなど）
 
