@@ -148,15 +148,25 @@ Claude Codeなどのエージェント設定ディレクトリへインストー
 GitHub CLIの `gh skill` コマンドからインストールできます。
 
 ```bash
+# 新規インストール
 gh skill install nanaism/yomiyasu yomiyasu
+
+# 最新版へのアップデート
+gh skill update yomiyasu
 ```
 
 導入先のエージェントを指定する場合は、`--agent codex` や `--agent claude-code` を追加します。
+版を固定して導入した環境で最新版へ更新する場合は、更新コマンドに `--unpin` を追加します。
 
 ### 3. `npx openskills install`（Cursor / Codexなど）
 
 ```bash
+# 新規インストールとAGENTS.mdへの反映
 npx openskills install nanaism/yomiyasu
+npx openskills sync
+
+# 最新版へのアップデートとAGENTS.mdへの反映
+npx openskills update yomiyasu
 npx openskills sync
 ```
 
@@ -170,6 +180,18 @@ npx openskills sync
 ```
 
 プラグインマニフェストではスキルの配置先（`"skills": "./skills/"`）を明示的に指定しています。
+
+導入済みのプラグインを最新版へ更新する場合は、ターミナルで次のコマンドを実行します。
+
+```bash
+# マーケットプレイスの情報を更新
+claude plugin marketplace update yomiyasu
+
+# プラグインを最新版へ更新
+claude plugin update yomiyasu@yomiyasu
+```
+
+更新後はClaude Codeを再起動して反映してください。
 
 ### 5. ZIPファイルからの登録（Claude.ai Web版など）
 
