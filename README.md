@@ -157,7 +157,7 @@ gh skill update yomiyasu
 
 導入先のエージェントを指定する場合は、`--agent codex` や `--agent claude-code` を追加してください。
 
-### 3. `npx openskills install`（Cursor / Codexなど）
+### 3. `npx openskills install`
 
 ```bash
 # 新規インストールとAGENTS.mdへの反映
