@@ -143,13 +143,17 @@ npx skills update yomiyasu
 
 Claude Codeなどのエージェント設定ディレクトリへインストール・更新します。すでに導入済みの場合は `npx skills update yomiyasu` で最新版へ更新できます。スキル定義は `skills/yomiyasu/SKILL.md` の1か所に配置しています。
 
-GitHub CLIでもインストールできます。
+### 2. GitHub CLI（`gh skill install`）
+
+GitHub CLIの `gh skill` コマンドからインストールできます。
 
 ```bash
 gh skill install nanaism/yomiyasu yomiyasu
 ```
 
-### 2. `npx openskills install`（Cursor / Codexなど）
+導入先のエージェントを指定する場合は、`--agent codex` や `--agent claude-code` を追加します。
+
+### 3. `npx openskills install`（Cursor / Codexなど）
 
 ```bash
 npx openskills install nanaism/yomiyasu
@@ -158,7 +162,7 @@ npx openskills sync
 
 `AGENTS.md`を経由して各エージェントから利用できるようになります。通常のルート指定で導入した環境はそのまま更新・同期できます。過去にネストされたパスを明示指定してインストールした環境では自動再配置が行われないため、元のインストール先やオプションに合わせて `npx openskills install nanaism/yomiyasu` を再実行してメタデータを更新したあと、更新や同期を行ってください。
 
-### 3. Claude Code プラグイン
+### 4. Claude Code プラグイン
 
 ```text
 /plugin marketplace add nanaism/yomiyasu
@@ -167,7 +171,7 @@ npx openskills sync
 
 プラグインマニフェストではスキルの配置先（`"skills": "./skills/"`）を明示的に指定しています。
 
-### 4. ZIPファイルからの登録（Claude.ai Web版など）
+### 5. ZIPファイルからの登録（Claude.ai Web版など）
 
 Claudeのカスタムスキル登録機能（Web版など）には、登録専用のZIPを使ってください。GitHubの「Download ZIP」で取得したリポジトリ全体のZIPには、プラグイン設定や開発用ファイルも含まれ、登録できない場合があります。
 
