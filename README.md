@@ -141,7 +141,13 @@ npx skills add nanaism/yomiyasu
 npx skills update yomiyasu
 ```
 
-Claude Codeなどのエージェント設定ディレクトリへインストール・更新します。すでに導入済みの場合は `npx skills update yomiyasu` で最新版へ更新できます。スキル定義はルートの `SKILL.md` が唯一の入口です。skills CLI 1.7.0 では通常のリポジトリ指定や旧下層指定からの更新経路を確認しており、削除して再インストールする必要はありません。
+Claude Codeなどのエージェント設定ディレクトリへインストール・更新します。すでに導入済みの場合は `npx skills update yomiyasu` で最新版へ更新できます。スキル定義は `skills/yomiyasu/SKILL.md` の1か所に配置しています。
+
+GitHub CLIでもインストールできます。
+
+```bash
+gh skill install nanaism/yomiyasu yomiyasu
+```
 
 ### 2. `npx openskills install`（Cursor / Codexなど）
 
@@ -159,7 +165,7 @@ npx openskills sync
 /plugin install yomiyasu@yomiyasu
 ```
 
-プラグインマニフェストではルートのスキル定義（`"skills": "./"`）を明示的に指定しています。
+プラグインマニフェストではスキルの配置先（`"skills": "./skills/"`）を明示的に指定しています。
 
 ### 4. ZIPファイルからの登録（Claude.ai Web版など）
 
@@ -260,7 +266,6 @@ python3 scripts/yomiyasu_diff.py --endings 対象文.md
 ├── .claude-plugin/                   # Claude Code用プラグイン設定
 │   ├── plugin.json
 │   └── marketplace.json
-├── SKILL.md                          # スキル定義エントリポイント（唯一の指示エントリ）
 ├── README.md                         # 本ドキュメント
 ├── LICENSE                           # ライセンス（MIT）
 ├── UNICODE-LICENSE.txt               # Unicodeデータの著作権・許諾通知
@@ -272,8 +277,11 @@ python3 scripts/yomiyasu_diff.py --endings 対象文.md
 │   ├── gemini-syntax.md              # 構文変換原則
 │   ├── slop-catalog.md               # 不自然な語彙・構文カタログ
 │   └── domains/                      # ドメイン別指針（tech, business, essay）
-├── skills/                           # 参照文書・検査ツールのコピー（ネスト側SKILL.mdは廃止）
+├── skills/                           # 配布用スキル（唯一のSKILL.mdと参照文書・検査ツール）
 │   └── yomiyasu/
+│       ├── SKILL.md
+│       ├── references/
+│       └── scripts/
 ├── tests/                            # 単体テスト・回帰テストスイート
 │   ├── test_bold_multiline.py        # 複数行太字・境界検査テストスイート
 │   └── fixtures/                     # 回帰テスト用フィクスチャ（50ケース）
